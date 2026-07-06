@@ -6,6 +6,8 @@ on:
   pull_request:
     branches:
       - main
+permissions:
+  contents: write
 jobs:
   echo-job:
     runs-on: ubuntu-latest
@@ -88,6 +90,8 @@ jobs:
     steps:
       - name: Use Output
         run: echo "${{ needs.output-job.outputs.job_message }}"
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Create File
         run: |
           echo "Important data" > data.txt
@@ -97,35 +101,17 @@ jobs:
           cat data.txt
           DATA=$(cat data.txt)
           echo "Data: $DATA"
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Configure Git
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
       - name: Make Changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           echo "New content" >> file.txt
           git add file.txt
-          git commit -m "Update file from workflow"
-          git push
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          fetch-depth: 0
-      
-      - name: Configure Git
-        run: |
-          git config user.name "Your Name"
-          git config user.email "your.email@example.com"
-      
-      - name: Commit and Push
-        run: |
-          git add .
-          git commit -m "Automated commit from workflow"
-          git push origin main
+          git commit -m "Update file from workflow" || echo "No changes to commit"
+          git push origin HEAD:main
