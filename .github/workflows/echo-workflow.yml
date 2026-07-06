@@ -12,11 +12,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Echo message
         run: echo "Hello, this is an echo workflow!"
-
-    - name: Multi line step
+      - name: Multi line step
         run: |
             echo "This is a multi-line step."
             echo "You can add as many lines as you want."
