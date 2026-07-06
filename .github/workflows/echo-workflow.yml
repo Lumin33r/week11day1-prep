@@ -73,7 +73,6 @@ jobs:
         run: |
           echo "Message: ${{ steps.step1.outputs.message }}"
           echo "Timestamp: ${{ steps.step1.outputs.timestamp }}"
-jobs:
   output-job:
     runs-on: ubuntu-latest
     outputs:
