@@ -9,7 +9,11 @@ on:
 jobs:
   echo-job:
     runs-on: ubuntu-latest
+    env:
+      JOB_LEVEL_VAR: "available-to-all-steps"
     steps:
+      - name: Use Job-Level Variable
+        run: echo "$JOB_LEVEL_VAR"
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Echo message
@@ -20,3 +24,109 @@ jobs:
             echo "You can add as many lines as you want."
             echo "Each line will be executed in order."
             pwd
+      - name: Display GitHub Variables
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Run Number: ${{ github.run_number }}"
+      - name: Use Secrets and Variables
+        run: |
+          echo "Variable: ${{ vars.MY_VARIABLE }}"
+          echo "Secret: ${{ secrets.MY_SECRET }}"
+      - name: Display Runner Environment Variables
+        run: |
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner Name: ${{ runner.name }}"
+          echo "Runner Tool Cache: ${{ runner.tool_cache }}"
+          echo "Runner Temp: ${{ runner.temp }}"
+          echo "Runner Workspace: ${{ runner.workspace }}"
+      - name: Built in System Environment Variables
+        run: |
+          echo "HOME: $HOME"
+          echo "PATH: $PATH"
+          echo "USER: $USER"
+          echo "PWD: $PWD"
+      - name: Custom Environment Variables
+        env:
+          CUSTOM_VAR: "custom-value"
+          ANOTHER_VAR: "another-value"
+        run: |
+          echo "Custom: $CUSTOM_VAR"
+          echo "Another: $ANOTHER_VAR"
+      - name: Set Environment Variable
+        run: |
+          echo "MY_VALUE=test123" >> $GITHUB_ENV
+      
+      - name: Use Environment Variable
+        run: |
+          echo "Value: $MY_VALUE"
+      - name: Set Step Output
+        id: step1
+        run: |
+          echo "message=Hello from step 1" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date)" >> $GITHUB_OUTPUT
+      - name: Use Step Output
+        run: |
+          echo "Message: ${{ steps.step1.outputs.message }}"
+          echo "Timestamp: ${{ steps.step1.outputs.timestamp }}"
+jobs:
+  output-job:
+    runs-on: ubuntu-latest
+    outputs:
+      job_message: ${{ steps.set-output.outputs.message }}
+    steps:
+      - name: Set Output
+        id: set-output
+        run: echo "message=Hello from job" >> $GITHUB_OUTPUT
+
+  input-job:
+    needs: output-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Output
+        run: echo "${{ needs.output-job.outputs.job_message }}"
+      - name: Create File
+        run: |
+          echo "Important data" > data.txt
+      
+      - name: Read File
+        run: |
+          cat data.txt
+          DATA=$(cat data.txt)
+          echo "Data: $DATA"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Make Changes
+        run: |
+          echo "New content" >> file.txt
+          git add file.txt
+          git commit -m "Update file from workflow"
+          git push
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config user.name "Your Name"
+          git config user.email "your.email@example.com"
+      
+      - name: Commit and Push
+        run: |
+          git add .
+          git commit -m "Automated commit from workflow"
+          git push origin main
